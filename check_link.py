@@ -5,7 +5,7 @@ import time, signal, sys, json, requests
 #globVars
 iface = "eth0"
 interval = 3
-webhook_url = 'https://hooks.slack.com/services/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'
+webhook_url = 'https://hooks.slack.com/services/XXXX/XXXXX/XXXXXX'
 
 def signal_handler(sig, frame):
         print('Stoped!')
@@ -19,6 +19,14 @@ def get_bytes(line):
          line + '_bytes', 'r') as f:
         data = f.read();
         return int(data)
+
+def change(current, previous):
+    if current == previous:
+        return 0
+    try:
+        return (abs(current - previous) / previous) * 100.0
+    except ZeroDivisionError:
+        return int(0)
 
 def slack_hook():
     slack_data = {
@@ -38,12 +46,17 @@ def slack_hook():
         webhook_url, data=json.dumps(slack_data),
         headers={'Content-Type': 'application/json'})
     if response.status_code != 200:
-        raise ValueError(f'Request to slack returned an error {response.status_code}, the response is:{response.text}')
+        raise ValueError(f'Error CODE:{response.status_code}, response is:{response.text}')
 
+tx_speed = 0; tx_speedl = 0
+rx_speed = 0; rx_speedl = 0
 
 while(True):
     tx1 = get_bytes('tx')
     rx1 = get_bytes('rx')
+
+    tx_speedl = tx_speed
+    rx_speedl = rx_speed
 
     time.sleep(interval)
 
@@ -53,7 +66,8 @@ while(True):
     tx_speed = round((((tx2 - tx1) * 8) / 1000000) / interval, 2)
     rx_speed = round((((rx2 - rx1) * 8) / 1000000) / interval, 2)
 
-    print(f'RX: {rx_speed} Mbps | TX: {tx_speed} Mbps')
-    if rx_speed > 10:
-        slack_hook()
+    diff_tx = round(change( tx_speed, tx_speedl ), 0)
+    diff_rx = round(change( rx_speed, rx_speedl ), 0)
+
+    print(f'TX: {tx_speed} Mbps | tx_diff: {diff_tx}% | RX: {rx_speed} Mbps | rx_diff: {diff_rx}')
 
