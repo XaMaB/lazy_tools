@@ -4,7 +4,7 @@ import time, signal, sys, json, requests
 
 #globVars
 iface = "eth0"
-interval = 3
+interval = 2
 webhook_url = 'https://hooks.slack.com/services/XXXX/XXXXX/XXXXXX'
 
 def signal_handler(sig, frame):
@@ -66,8 +66,9 @@ while(True):
     tx_speed = round((((tx2 - tx1) * 8) / 1000000) / interval, 2)
     rx_speed = round((((rx2 - rx1) * 8) / 1000000) / interval, 2)
 
-    diff_tx = round(change( tx_speed, tx_speedl ), 0)
-    diff_rx = round(change( rx_speed, rx_speedl ), 0)
+    diff_tx = round(change( tx_speed, tx_speedl ))
+    diff_rx = round(change( rx_speed, rx_speedl ))
 
-    print(f'TX: {tx_speed} Mbps | tx_diff: {diff_tx}% | RX: {rx_speed} Mbps | rx_diff: {diff_rx}')
+    print(f'TX: {tx_speed} Mbps | tx_diff: {diff_tx}% | RX: {rx_speed} Mbps | rx_diff: {diff_rx}', end='\r', flush=True )
+
 
