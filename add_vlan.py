@@ -62,7 +62,8 @@ unconf_vlan_r = []
 for unconf in control_vlans:
     if unconf not in conf_vlans:
         unconf_vlan_r.append(unconf)
-        unconf_vlan = set(unconf_vlan_r)
+
+unconf_vlan = set(unconf_vlan_r)
 
 #listen phys interface if new clients on unconfigured vlans.
 if len(unconf_vlan) != 0:
