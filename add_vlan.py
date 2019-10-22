@@ -25,7 +25,7 @@ for interface in int_face:
 
 #Slackhook
 host = socket.gethostname()
-webhook_url = 'https://hooks.slack.com/services/XXXXXX/XXXXX/XXXXX'
+webhook_url = 'https://hooks.slack.com/services/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'
 
 def slack_hook():
     slack_data = {"channel": "#nethooks",
@@ -48,21 +48,21 @@ def slack_hook():
     if response.status_code != 200:
         raise ValueError(f'Error CODE:{response.status_code}, response is:{response.text}')
 
-#GET incoming vlan tags with tcpdump
+#func to get vlans tags with tcpdump
 dumped_vlans = []
 def listen(INTF):
-    dumped_tags = subprocess.getoutput("/usr/bin/timeout 3s /usr/sbin/tcpdump -i " + INTF + 
+    dumped_tags = subprocess.getoutput("/usr/bin/timeout 5s /usr/sbin/tcpdump -i " + INTF + 
     " -nn -e vlan 2>/dev/null | /usr/bin/awk '!seen[$11] {print substr($11, 1, length($11)-1)} {++seen[$11]}'")
     raw_list = dumped_tags.split("\n")
     for tags in raw_list:
         if tags.isdigit():
             dumped_vlans.append(tags)
-
 #Compare 2 lists (if control vlans is configured).
-unconf_vlan = []
+unconf_vlan_r = []
 for unconf in control_vlans:
     if unconf not in conf_vlans:
-        unconf_vlan.append(unconf)
+        unconf_vlan_r.append(unconf)
+        unconf_vlan = set(unconf_vlan_r)
 
 #listen phys interface if new clients on unconfigured vlans.
 if len(unconf_vlan) != 0:
