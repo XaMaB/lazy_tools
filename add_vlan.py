@@ -25,7 +25,7 @@ for interface in int_face:
 
 #Slackhook
 host = socket.gethostname()
-webhook_url = 'https://hooks.slack.com/services/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'
+webhook_url = 'https://hooks.slack.com/services/XXXX/XXXX/XXXX'
 
 def slack_hook():
     slack_data = {"channel": "#nethooks",
