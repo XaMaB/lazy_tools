@@ -10,6 +10,8 @@ if glob.glob(path):
        clients_vlans = set([x.split('\t')[2].rstrip() for x in open(r_file).readlines()])
        for vlans_id in clients_vlans:
            control_vlans.append(vlans_id)
+else:
+    print('No control file!'); exit()
 
 #GET configured interface list.
 int_face = os.listdir('/sys/class/net/')
