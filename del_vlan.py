@@ -76,7 +76,7 @@ while x < 5:
         x = x+1
         rx = get_packets(inets, 'rx')
         iDB[inets] = rx
-        if ( rx == iDB[inets] and rx == inDB[inets] and x == 5 ):
+        if ( rx == inDB[inets] and x == 5 ):
             for del_vlan in inDB:
                 commandA = '/sbin/arping 1.1.1.1 -c 1 -I'+str(del_vlan)
                 exit = os.WEXITSTATUS(os.system(commandA))
