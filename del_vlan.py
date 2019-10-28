@@ -2,9 +2,9 @@
 
 import os, time, signal, sys, socket, requests, json
 
-interval = 1
+interval = 3
 host = socket.gethostname()
-webhook_url = 'https://hooks.slack.com/services/XXXXXXX/XXXXXXX/XXXXXXXX'
+webhook_url = 'https://hooks.slack.com/services/XXXXX/XXXXXX/XXXXXXXXXXX'
 
 #Trap Ctr+C
 def signal_handler(sig, frame):
@@ -54,40 +54,34 @@ for interface in int_face:
         continue
     else:
         rx = get_packets(interface, 'rx')
-        tx = get_packets(interface, 'tx')
-        inDB[interface] = rx; outDB[interface] = tx
-        inDB2 = inDB.copy(); outDB2 = outDB.copy()
+        inDB[interface] = rx
+        inDB2 = inDB.copy()
 time.sleep(interval)
 
 #Drop from main dict, the interface which has traffic on it.
 for interface in inDB2:
     rx = get_packets(interface, 'rx')
-    tx = get_packets(interface, 'tx')
-    if (rx != inDB[interface] or tx != outDB[interface]):
-        inDB.pop(interface); outDB.pop(interface)
+    if (rx != inDB[interface]):
+        inDB.pop(interface)
 
 #Check 5 times * $interval_time, condition for vlan remove.
 
-oDB = {}
 iDB = {}
 x = 0
 if len(inDB) == 0:
     print('All Interfaces are active!'); exit()
 while x < 5:
     for inets in inDB:
+        time.sleep(interval)
         x = x+1
         rx = get_packets(inets, 'rx')
-        tx = get_packets(inets, 'tx')
-        iDB[inets] = rx; oDB[inets] = tx
-        if ( rx == iDB[inets] and tx == oDB[inets] 
-            and rx == inDB[inets] and tx == outDB[inets]
-            and x == 5 ):
+        iDB[inets] = rx
+        if ( rx == iDB[inets] and rx == inDB[inets] and x == 5 ):
             for del_vlan in inDB:
                 commandA = '/sbin/arping 1.1.1.1 -c 1 -I'+str(del_vlan)
                 exit = os.WEXITSTATUS(os.system(commandA))
                 if exit != 0:
                     os.system("/sbin/vconfig rem "+str(del_vlan))
                     slack_hook()
-        time.sleep(interval)
 
 
