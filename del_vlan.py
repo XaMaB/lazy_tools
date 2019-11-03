@@ -78,6 +78,7 @@ while x < 5:
         iDB[inets] = rx
         if ( rx == inDB[inets] and x == 5 ):
             for del_vlan in inDB:
+                #expect arp-proxy replay
                 commandA = '/sbin/arping 1.1.1.1 -c 1 -I'+str(del_vlan)
                 exit = os.WEXITSTATUS(os.system(commandA))
                 if exit != 0:
