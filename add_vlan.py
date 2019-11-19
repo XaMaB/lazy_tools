@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+
 import glob, os, subprocess, socket, requests, json
 
 #GET vlans, that router send us.
@@ -29,16 +30,22 @@ for interface in int_face:
 host = socket.gethostname()
 webhook_url = 'https://hooks.slack.com/services/XXXXX/XXXXX/XXXXXX'
 
-def slack_hook():
+def slack_hook(case):
+    if case == "new":
+        mess = { "title": "New VLAN added:", "value": f'{phys_int}.{tag}', "short": "true" }
+        color = "#008000"
+    else:
+        mess = { "title": "NOT in SWITCH", "value": f'{tag}', "short": "true" }
+        color = "#FFA500"
     slack_data = {"channel": "#nethooks",
       "attachments": [
         {
-          "text": "INFO: "+str(host)+" NEW VLAN",
-          "color": "#008000",
+          "text": "INFO: "+str(host)+" VLAN Attention!",
+          "color": color,
           "mrkdwn_in": ["text"],
           "fields": [
            { "title": "HOST:", "value": host, "short": "true" },
-           { "title": "New VLAN added:", "value": f'{phys_int}.{tag}', "short": "true" }
+            mess
           ]
         }
       ]
@@ -59,15 +66,25 @@ def listen(INTF):
     for tags in raw_list:
         if tags.isdigit():
             dumped_vlans.append(tags)
+
 #Compare 2 lists (if control vlans is configured).
 unconf_vlan_r = []
 for unconf in control_vlans:
-    if unconf not in conf_vlans:
+    if ( unconf not in conf_vlans and int(unconf) > 3500 ):
         unconf_vlan_r.append(unconf)
-
 unconf_vlan = set(unconf_vlan_r)
 
+#add to list alarmed vlans
+if glob.glob('/tmp/alarmed.info'):
+    is_alarm = []
+    for al_tag in open('/tmp/alarmed.info'):
+        is_alarm.append(al_tag.strip())
+    already_alr = set(is_alarm)
+else:
+    already_alr = []
+
 #listen phys interface if new clients on unconfigured vlans.
+alarmed = []
 if len(unconf_vlan) != 0:
     for phys_int in phys:
         listen(phys_int)
@@ -75,6 +92,17 @@ if len(unconf_vlan) != 0:
             if tag in dumped_vlans:
                 os.system("/sbin/vconfig add "+str(phys_int)+" "+str(tag))
                 os.system("/usr/sbin/ip link set up dev "+str(phys_int)+"."+str(tag))
-                slack_hook()
+                slack_hook('new')
+            else:
+                alarmed.append(tag)
 
+        for tag in alarmed:
+            if tag not in already_alr:
+                slack_hook('not')
+
+if len(alarmed) != 0:
+    with open('/tmp/alarmed.info', 'a') as f:
+        for item in alarmed:
+            f.write("%s\n" % item)
+    f.close()
 
