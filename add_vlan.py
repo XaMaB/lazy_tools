@@ -8,11 +8,11 @@ path = '/tmp/rc-*'
 control_vlans = []
 if glob.glob(path):
     for r_file in glob.glob(path):
-       clients_vlans = set([x.split('\t')[2].rstrip() for x in open(r_file).readlines()])
+       clients_vlans = list(set([x.split('\t')[2].rstrip() for x in open(r_file).readlines()]))
        for vlans_id in clients_vlans:
            control_vlans.append(vlans_id)
 else:
-    print('No control file!'); exit()
+    print('No control file!');exit()
 
 #GET configured interface list.
 int_face = os.listdir('/sys/class/net/')
@@ -28,7 +28,7 @@ for interface in int_face:
 
 #Slackhook
 host = socket.gethostname()
-webhook_url = 'https://hooks.slack.com/services/XXXXX/XXXXX/XXXXXX'
+webhook_url = 'https://hooks.slack.com/services/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'
 
 def slack_hook(case):
     if case == "new":
@@ -84,7 +84,7 @@ else:
     already_alr = []
 
 #listen phys interface if new clients on unconfigured vlans.
-alarmed = []
+alarmed = set([])
 if len(unconf_vlan) != 0:
     for phys_int in phys:
         listen(phys_int)
@@ -94,15 +94,12 @@ if len(unconf_vlan) != 0:
                 os.system("/usr/sbin/ip link set up dev "+str(phys_int)+"."+str(tag))
                 slack_hook('new')
             else:
-                alarmed.append(tag)
-
-        for tag in alarmed:
-            if tag not in already_alr:
-                slack_hook('not')
+                alarmed.add(tag)
 
 if len(alarmed) != 0:
-    with open('/tmp/alarmed.info', 'a') as f:
-        for item in alarmed:
-            f.write("%s\n" % item)
-    f.close()
-
+    for tag in alarmed:
+        if tag not in already_alr:
+            with open('/tmp/alarmed.info', 'a') as f:
+                f.write("%s\n" % tag); f.close()
+            slack_hook('not')
+    
